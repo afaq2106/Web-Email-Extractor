@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Scraper & Sender</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>Email Scraper & Sender</h2>
+        
+        <h3>Scrape Emails</h3>
+        <form id="scrapeForm">
+            <input type="text" id="url" name="url" placeholder="Enter Website URL" required>
+            <button type="submit">Finding Email:</button>
+        </form>
+        
+        <div id="result"></div>
+
+        <h3>Send Email</h3>
+        <form id="emailForm">
+            <input type="email" id="sender_email" placeholder="Your Gmail Address" required>
+            <input type="password" id="sender_password" placeholder="Your Gmail App Password" required>
+            <input type="email" id="recipient_email" placeholder="Recipient Email" required>
+            <input type="text" id="subject" placeholder="Email Subject" required>
+            <textarea id="message" placeholder="Enter your message here" required></textarea>
+            <button type="submit">Send Email</button>
+        </form>
+        
+        <div id="emailResult"></div>
+    </div>
+
+    <script>
+        document.getElementById("scrapeForm").onsubmit = async function (event) {
+            event.preventDefault();
+            let url = document.getElementById("url").value;
+            
+            let response = await fetch("/", {
+                method: "POST",
+                body: new URLSearchParams({ "url": url }),
+                headers: { "Content-Type": "application/x-www-form-urlencoded" }
+            });
+
+            let data = await response.json();
+            let resultDiv = document.getElementById("result");
+            if (data.emails.length > 0) {
+                resultDiv.innerHTML = "<h3>Extracted Emails:</h3><p>" + data.emails.join("<br>") + "</p>";
+            } else {
+                resultDiv.innerHTML = "<h3>No emails found.</h3>";
+            }
+        };
+
+        document.getElementById("emailForm").onsubmit = async function (event) {
+            event.preventDefault();
+            let sender_email = document.getElementById("sender_email").value;
+            let sender_password = document.getElementById("sender_password").value;
+            let recipient_email = document.getElementById("recipient_email").value;
+            let subject = document.getElementById("subject").value;
+            let message = document.getElementById("message").value;
+
+            let response = await fetch("/send_email", {
+                method: "POST",
+                body: JSON.stringify({ sender_email, sender_password, recipient_email, subject, message }),
+                headers: { "Content-Type": "application/json" }
+            });
+
+            let data = await response.json();
+            document.getElementById("emailResult").innerHTML = data.success ? 
+                "<h3 style='color:green;'>✅ " + data.message + "</h3>" : 
+                "<h3 style='color:red;'>❌ " + data.message + "</h3>";
+        };
+    </script>
+</body>
+</html>
